@@ -3,6 +3,7 @@
 
 // Month names in Portuguese
 const MONTH_NAMES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const MONTH_SHORT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 
 // Build data index for fast lookup
 const dataIndex = {};
@@ -27,7 +28,6 @@ function populateYears() {
     if (y === 2026) o2.selected = true;
     endYearSel.appendChild(o2);
   });
-  // Set default end month to February
   document.getElementById('endMonth').value = '2';
 }
 
@@ -41,13 +41,8 @@ function fmtNum(n, decimals = 2) {
   return decimals > 0 ? sign + intPart + ',' + decPart : sign + intPart;
 }
 
-function fmtCurrency(n) {
-  return fmtNum(n) + '$';
-}
-
-function fmtPercent(n) {
-  return (n >= 0 ? '+' : '') + fmtNum(n) + '%';
-}
+function fmtCurrency(n) { return fmtNum(n) + '$'; }
+function fmtPercent(n) { return (n >= 0 ? '+' : '') + fmtNum(n) + '%'; }
 
 // Parse investment input
 function parseInvestment(str) {
@@ -92,7 +87,6 @@ function calculate() {
   const reinvestDividends = document.querySelector('input[name="dividends"]:checked').value === 'yes';
   const adjustInflation = document.getElementById('adjustInflation').checked;
 
-  // Validation
   if (isNaN(investment) || investment <= 0) {
     errEl.textContent = 'Por favor, introduz um valor de investimento válido.';
     errEl.classList.remove('sp500-hidden');
@@ -167,36 +161,37 @@ function calculate() {
   document.getElementById('resSummary').textContent = summaryText;
 
   // Build year-by-year data for chart and table
+  // Include month info and partial-year returns
   const yearlyData = [];
   let prevVal = null;
-  const startData = dataIndex[startKey];
-  const startFieldVal = startData[field];
+  const startFieldVal = dataIndex[startKey][field];
 
   for (let y = startYear; y <= endYear; y++) {
-    let m, key;
+    let m;
     if (y === startYear) {
       m = startMonth;
     } else if (y === endYear) {
       m = endMonth;
     } else {
+      // For intermediate years, use January
       m = 1;
     }
-    key = dateKey(y, m);
+    const key = dateKey(y, m);
     if (!dataIndex[key]) continue;
-    
+
     const val = dataIndex[key][field];
     const investmentVal = investment * (val / startFieldVal);
-    let annualRet = null;
+    let periodReturn = null;
 
     if (prevVal !== null) {
-      annualRet = ((val / prevVal) - 1) * 100;
+      periodReturn = ((val / prevVal) - 1) * 100;
     }
 
     yearlyData.push({
       year: y,
       month: m,
       value: investmentVal,
-      annualReturn: annualRet,
+      periodReturn: periodReturn,
       rawVal: val
     });
     prevVal = val;
@@ -208,7 +203,7 @@ function calculate() {
   buildChart(yearlyData, investment);
 
   // Build table
-  buildTable(yearlyData);
+  buildTable(yearlyData, startMonth, startYear, endMonth, endYear);
 
   // Scroll to results
   setTimeout(() => {
@@ -234,97 +229,147 @@ function buildChart(data, investment) {
         {
           label: 'Rentabilidade total acumulada',
           data: returnValues,
-          backgroundColor: '#fc8c2a',
-          borderRadius: { topLeft: 4, topRight: 4 },
-          barPercentage: 0.65,
-          categoryPercentage: 0.75,
-          order: 1
+          backgroundColor: '#FD8D2B',
+          stack: 'Stack 0'
         },
         {
           label: 'Total investido',
           data: data.map(d => Math.min(investment, d.value)),
-          backgroundColor: '#2970fe',
-          borderRadius: 0,
-          barPercentage: 0.65,
-          categoryPercentage: 0.75,
-          order: 2
+          backgroundColor: '#2970FF',
+          stack: 'Stack 0'
         }
       ]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      interaction: {
-        mode: 'index',
-        intersect: false
+      layout: {
+        padding: { top: window.innerWidth < 768 ? 20 : 10 }
       },
       plugins: {
         legend: {
-          position: 'top',
-          align: 'start',
-          reverse: false,
+          position: 'bottom',
           labels: {
             usePointStyle: true,
             pointStyle: 'circle',
-            pointStyleWidth: 10,
             padding: 20,
-            font: { family: 'Inter', size: 12, weight: '500' },
-            color: '#3a4453'
-          }
+            color: '#3A4454',
+            font: {
+              family: 'Inter',
+              size: 12,
+              weight: '500',
+              letterSpacing: '-0.0125em'
+            },
+            generateLabels: function(chart) {
+              return chart.data.datasets.map(function(dataset, index) {
+                var meta = chart.getDatasetMeta(index);
+                return {
+                  text: dataset.label,
+                  fillStyle: dataset.backgroundColor,
+                  strokeStyle: dataset.backgroundColor,
+                  lineWidth: 0,
+                  hidden: meta.hidden,
+                  datasetIndex: index,
+                  fontColor: meta.hidden ? 'rgba(58,68,84,0.5)' : '#3A4454',
+                  opacity: meta.hidden ? 0.5 : 1
+                };
+              });
+            }
+          },
+          onClick: function(e, legendItem, legend) {
+            var meta = legend.chart.getDatasetMeta(legendItem.datasetIndex);
+            meta.hidden = meta.hidden === null ? true : !meta.hidden;
+            legend.chart.update();
+          },
+          onHover: function(event) { event.chart.canvas.style.cursor = 'pointer'; },
+          onLeave: function(event) { event.chart.canvas.style.cursor = 'default'; }
         },
         tooltip: {
+          displayColors: true,
+          position: 'nearest',
           backgroundColor: '#121721',
-          titleFont: { family: 'Inter', size: 13 },
-          bodyFont: { family: 'Inter', size: 12 },
-          padding: 12,
           cornerRadius: 8,
+          padding: 12,
+          titleFont: { family: 'Inter', size: 11, weight: '500' },
+          titleColor: '#CED5DF',
+          bodyFont: { family: 'Inter', size: 11, weight: '500' },
+          bodyColor: '#E6E6E6',
+          usePointStyle: true,
+          bodySpacing: 5,
+          boxPadding: 3,
           callbacks: {
-            title: function(items) {
-              return items[0].label;
-            },
-            label: function(ctx) {
-              const val = ctx.parsed.y;
-              return ' ' + ctx.dataset.label + ': ' + fmtCurrency(val);
-            },
-            afterBody: function(items) {
-              const idx = items[0].dataIndex;
-              const d = data[idx];
-              return '\n Total: ' + fmtCurrency(d.value);
+            title: function(items) { return items[0].label; },
+            label: function(ctx) { return ' ' + ctx.dataset.label + ': ' + fmtCurrency(ctx.parsed.y); },
+            labelColor: function(context) {
+              return {
+                backgroundColor: context.dataset.backgroundColor,
+                borderColor: context.dataset.backgroundColor,
+                borderWidth: 0,
+                borderRadius: 50
+              };
             }
           }
+        },
+        title: {
+          display: true,
+          text: 'Capital total',
+          align: 'start',
+          color: '#3A4454',
+          font: {
+            family: 'Inter',
+            size: 13,
+            weight: '500',
+            letterSpacing: '-0.0125em'
+          },
+          padding: { top: 0, bottom: 25 }
         }
       },
       scales: {
         x: {
           stacked: true,
-          grid: { display: false },
+          title: {
+            display: true,
+            text: 'Anos',
+            align: 'end',
+            color: '#3A4454',
+            font: {
+              family: 'Inter',
+              size: 13,
+              weight: '500',
+              letterSpacing: '-0.0125em'
+            },
+            padding: { top: 10 }
+          },
           ticks: {
-            font: { family: 'Inter', size: 11 },
-            color: '#697386',
+            color: '#4F5969',
+            font: {
+              family: 'Inter',
+              size: 10,
+              weight: '500',
+              letterSpacing: '-0.0125em'
+            },
             maxRotation: 0,
             autoSkip: true,
             maxTicksLimit: 15
           },
-          border: { display: false }
+          grid: { drawOnChartArea: false }
         },
         y: {
           stacked: true,
-          grid: { color: '#f2f4f7' },
-          border: { display: false },
+          title: { display: false },
           ticks: {
-            font: { family: 'Inter', size: 11 },
-            color: '#697386',
-            callback: function(value) {
-              if (value >= 1000000) return fmtNum(value / 1000000, 1) + 'M $';
-              if (value >= 1000) return fmtNum(value / 1000, 0) + 'k $';
-              return fmtNum(value, 0) + ' $';
+            color: '#4F5969',
+            font: {
+              family: 'Inter',
+              size: 10,
+              weight: '500',
+              letterSpacing: '-0.0125em'
+            },
+            callback: function(v) {
+              if (v >= 1000000) return (v / 1000000).toFixed(1).replace('.0', '') + 'M $';
+              if (v >= 1000) return (v / 1000).toFixed(1).replace('.0', '') + 'k $';
+              return v + ' $';
             }
-          },
-          title: {
-            display: true,
-            text: 'Capital total ($)',
-            font: { family: 'Inter', size: 12, weight: '500' },
-            color: '#697386'
           }
         }
       }
@@ -332,24 +377,33 @@ function buildChart(data, investment) {
   });
 }
 
-function buildTable(data) {
+function buildTable(data, startMonth, startYear, endMonth, endYear) {
   const tbody = document.getElementById('tableBody');
   tbody.innerHTML = '';
-  data.forEach((d, i) => {
-    const tr = document.createElement('tr');
-    const tdYear = document.createElement('td');
-    tdYear.textContent = d.year;
-    const tdValue = document.createElement('td');
+  data.forEach(function(d, i) {
+    var tr = document.createElement('tr');
+
+    var tdPeriod = document.createElement('td');
+    // Show "Mon YYYY" for first and last rows, just "YYYY" for intermediate
+    if (i === 0 || i === data.length - 1) {
+      tdPeriod.textContent = MONTH_SHORT[d.month - 1] + ' ' + d.year;
+    } else {
+      tdPeriod.textContent = d.year;
+    }
+
+    var tdValue = document.createElement('td');
     tdValue.textContent = fmtCurrency(d.value);
-    const tdReturn = document.createElement('td');
-    if (d.annualReturn !== null) {
-      tdReturn.textContent = fmtPercent(d.annualReturn);
-      tdReturn.className = d.annualReturn >= 0 ? 'positive' : 'negative';
+
+    var tdReturn = document.createElement('td');
+    if (d.periodReturn !== null) {
+      tdReturn.textContent = fmtPercent(d.periodReturn);
+      tdReturn.className = d.periodReturn >= 0 ? 'positive' : 'negative';
     } else {
       tdReturn.textContent = '—';
       tdReturn.style.color = '#96a0b0';
     }
-    tr.appendChild(tdYear);
+
+    tr.appendChild(tdPeriod);
     tr.appendChild(tdValue);
     tr.appendChild(tdReturn);
     tbody.appendChild(tr);
@@ -374,7 +428,7 @@ document.addEventListener('click', function() {
 
 function downloadChart() {
   if (!chartInstance) return;
-  const link = document.createElement('a');
+  var link = document.createElement('a');
   link.download = 'sp500-retorno-historico.png';
   link.href = chartInstance.canvas.toDataURL('image/png');
   link.click();
@@ -383,13 +437,14 @@ function downloadChart() {
 
 function downloadCSV() {
   if (!currentTableData.length) return;
-  let csv = 'Ano,Valor do investimento,Retorno anual\n';
-  currentTableData.forEach(d => {
-    const ret = d.annualReturn !== null ? d.annualReturn.toFixed(2) + '%' : '';
-    csv += d.year + ',' + d.value.toFixed(2) + ',' + ret + '\n';
+  var csv = 'Período,Valor do investimento,Retorno do período\n';
+  currentTableData.forEach(function(d, i) {
+    var period = (i === 0 || i === currentTableData.length - 1) ? MONTH_SHORT[d.month - 1] + ' ' + d.year : '' + d.year;
+    var ret = d.periodReturn !== null ? d.periodReturn.toFixed(2) + '%' : '';
+    csv += period + ',' + d.value.toFixed(2) + ',' + ret + '\n';
   });
-  const blob = new Blob([csv], { type: 'text/csv' });
-  const link = document.createElement('a');
+  var blob = new Blob([csv], { type: 'text/csv' });
+  var link = document.createElement('a');
   link.download = 'sp500-retorno-historico.csv';
   link.href = URL.createObjectURL(blob);
   link.click();
