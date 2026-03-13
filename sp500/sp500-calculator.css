@@ -1,7 +1,7 @@
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 .sp500-calc{font-family:'Inter',sans-serif;max-width:52.625rem;margin:0 auto;display:flex;flex-direction:column;gap:24px;color:#202432;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
 .sp500-card{background:#fff;border:4px solid #f2f4f7;border-radius:1.25rem;padding:2.5rem}
-.sp500-card-title{font-size:18px;font-weight:500;color:#202432;margin-bottom:2rem;line-height:1.4}
+.sp500-card-title{font-size:1.25rem;font-weight:500;color:#202432;margin-bottom:2rem;line-height:1.44;letter-spacing:-0.006em}
 .sp500-form{display:flex;flex-direction:column;gap:24px}
 .sp500-field-row{display:flex;gap:8px}
 .sp500-field-row .sp500-field{flex:1}
@@ -36,10 +36,10 @@
 .sp500-results-subtitle{font-size:14px;color:#697386;margin-bottom:2rem;line-height:1.5}
 .sp500-result-row{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;padding:0.75rem 0;border-bottom:1px solid #e9ecf1;gap:0.5rem}
 .sp500-result-row:last-of-type{border-bottom:none}
-.sp500-result-label{font-size:16px;color:#3a4454;display:flex;align-items:center;gap:5px}
-.sp500-result-value{font-size:16px;font-weight:400;color:#202432;text-align:right}
-.sp500-result-row.sp500-result-main .sp500-result-label{font-size:16px;font-weight:600;color:#202432}
-.sp500-result-row.sp500-result-main .sp500-result-value{font-size:16px;font-weight:600;color:#202432}
+.sp500-result-label{font-size:1rem;color:#3a4454;display:flex;align-items:center;gap:5px;line-height:1.5}
+.sp500-result-value{font-size:1.125rem;font-weight:500;color:#202432;text-align:right;line-height:1.5}
+.sp500-result-row.sp500-result-main .sp500-result-label{font-size:1.125rem;font-weight:600;color:#202432}
+.sp500-result-row.sp500-result-main .sp500-result-value{font-size:1.25rem;font-weight:600;color:#202432}
 .sp500-result-value.positive{color:#16a34a}
 .sp500-result-value.negative{color:#dc2626}
 .sp500-summary{margin-top:24px;font-size:14px;color:#3a4454;line-height:1.7;padding-bottom:20px;border-bottom:1px solid #e9ecf1}
@@ -55,11 +55,12 @@
 .sp500-download-menu.show{display:block}
 .sp500-download-menu button{display:block;width:100%;text-align:left;padding:8px 12px;font-family:'Inter',sans-serif;font-size:13px;color:#3a4454;background:none;border:none;border-radius:8px;cursor:pointer}
 .sp500-download-menu button:hover{background:#f5f7fa}
-.sp500-chart-container{position:relative;width:100%;height:360px;margin-bottom:8px}
+.sp500-chart-container{position:relative;width:100%;min-height:20rem;margin-bottom:8px}
 .sp500-table-container{max-height:500px;overflow-y:auto;overflow-x:auto;width:100%}
 .sp500-table{width:100%;border-collapse:separate;border-spacing:0;font-size:14px}
 .sp500-table thead{position:sticky;top:0;z-index:2}
 .sp500-table th{text-align:left;padding:12px;font-weight:500;color:#4f5969;background:transparent;font-size:14px;white-space:normal;word-break:break-word;vertical-align:top}
+.sp500-table th:first-child,.sp500-table td:first-child{width:6rem;min-width:6rem}
 .sp500-table td{padding:12px;color:#202432;white-space:nowrap}
 .sp500-table tbody td:first-child{border-left:1px solid #e9ecf1}
 .sp500-table tbody td:last-child{border-right:1px solid #e9ecf1}
@@ -78,7 +79,7 @@
 .sp500-error{color:#dc2626;font-size:13px;margin-top:4px;padding:8px 12px;background:#fef2f2;border-radius:8px}
 @media(max-width:767px){
   .sp500-card{padding:1.5rem 1rem}
-  .sp500-card-title{font-size:16px;margin-bottom:1.5rem}
+  .sp500-card-title{font-size:1.125rem;margin-bottom:1.5rem}
   .sp500-field-row{flex-direction:column;gap:16px}
   .sp500-radio-group{flex-direction:column;gap:10px}
   .sp500-result-row{flex-direction:column;align-items:flex-start;gap:4px}
